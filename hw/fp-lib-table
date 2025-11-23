@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "xlink035")(type "KiCad")(uri "${KIPRJMOD}/xlink033.pretty")(options "")(descr ""))
+)
