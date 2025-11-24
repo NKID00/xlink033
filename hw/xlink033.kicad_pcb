@@ -6570,17 +6570,6 @@
 			(justify right)
 		)
 	)
-	(gr_text "JPJPJP"
-		(at 69.4 73.5 270)
-		(layer "F.SilkS")
-		(uuid "0b50f0fd-b1fd-458e-918c-4e5bd043ce8a")
-		(effects
-			(font
-				(size 0.8 0.8)
-				(thickness 0.1)
-			)
-		)
-	)
 	(gr_text "TDI"
 		(at 96.940263 76.085186 0)
 		(layer "F.SilkS" knockout)
