@@ -5171,6 +5171,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C84268"
+			(at 214.63 53.34 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "29c8ed45-0c8d-4e55-8af7-921bb0932ebb")
 		)
@@ -5722,6 +5733,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C15849"
+			(at 179.07 52.07 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "d3a6b7e7-fc54-4916-8068-6b0f9405da98")
 		)
@@ -5880,6 +5902,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C25506"
+			(at 68.58 167.64 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "6"
 			(uuid "f46b8b4c-fa7a-455f-8db1-db41ec73ea57")
 		)
@@ -5971,6 +6004,17 @@
 		)
 		(property "Description" "Current limited power switch, single channel, SOT-23-6"
 			(at 238.506 103.632 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C54973763"
+			(at 238.76 115.57 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6152,6 +6196,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C12018"
+			(at 88.9 172.72 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "8"
 			(uuid "5543c1b7-6a9b-4bcb-8b6d-3fd7be18ca1c")
 		)
@@ -6241,6 +6296,17 @@
 		)
 		(property "Description" "Push button switch, generic, two pins"
 			(at 140.97 119.38 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C720477"
+			(at 140.97 119.38 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6644,6 +6710,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C14663"
+			(at 134.62 49.53 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "2c153878-15f5-4b89-b211-acb9a0d56525")
 		)
@@ -6803,6 +6880,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C57446"
+			(at 215.9 77.47 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "8"
 			(uuid "51201f4c-1f77-4fa0-94dc-ba429c2ecf0e")
 		)
@@ -6891,6 +6979,17 @@
 		)
 		(property "Description" "4 resistor network, parallel topology, split"
 			(at 68.58 170.18 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25506"
+			(at 68.58 170.18 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6999,6 +7098,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C57446"
+			(at 215.9 111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "8"
 			(uuid "51201f4c-1f77-4fa0-94dc-ba429c2ecf0f")
 		)
@@ -7087,6 +7197,17 @@
 		)
 		(property "Description" "4 resistor network, parallel topology, split"
 			(at 133.35 165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25506"
+			(at 133.35 165.1 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7272,6 +7393,17 @@
 				)
 			)
 		)
+		(property "LCSC" ""
+			(at 100.33 167.64 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "6"
 			(uuid "e018d074-2f90-4ae8-a9c2-96dfdafc0265")
 		)
@@ -7387,6 +7519,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C84269"
+			(at 248.92 53.34 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "e1c42b51-48c0-4487-be0d-bd1a882d001c")
 		)
@@ -7457,6 +7600,17 @@
 			)
 		)
 		(property "Description" "USB 2.0-only 16P Type-C Receptacle connector"
+			(at 57.15 111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C2988369"
 			(at 57.15 111.76 0)
 			(hide yes)
 			(show_name no)
@@ -7592,6 +7746,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C12028"
+			(at 88.9 101.6 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "603445e3-1297-4979-8d19-61915e59e9c1")
 		)
@@ -7682,6 +7847,17 @@
 			)
 		)
 		(property "Description" "4 resistor network, parallel topology, split"
+			(at 226.06 124.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C57446"
 			(at 226.06 124.46 0)
 			(hide yes)
 			(show_name no)
@@ -7948,6 +8124,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C15849"
+			(at 153.67 52.07 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "567c26ca-25b3-46a4-8d11-9bf0ebbc9be8")
 		)
@@ -8021,6 +8208,17 @@
 		)
 		(property "Description" "Current limited power switch, single channel, SOT-23-6"
 			(at 238.506 69.342 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C54973763"
+			(at 238.76 81.28 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8112,6 +8310,17 @@
 		)
 		(property "Description" "4 resistor network, parallel topology, split"
 			(at 88.9 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C12028"
+			(at 88.9 104.14 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8299,6 +8508,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C12028"
+			(at 242.57 46.99 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "603445e3-1297-4979-8d19-61915e59e9c3")
 		)
@@ -8386,6 +8606,17 @@
 			)
 		)
 		(property "Description" "4 resistor network, parallel topology, split"
+			(at 140.97 105.41 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C12018"
 			(at 140.97 105.41 0)
 			(hide yes)
 			(show_name no)
@@ -8574,6 +8805,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C57446"
+			(at 226.06 90.17 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "8"
 			(uuid "51201f4c-1f77-4fa0-94dc-ba429c2ecf11")
 		)
@@ -8663,6 +8905,17 @@
 		)
 		(property "Description" "4 resistor network, parallel topology, split"
 			(at 133.35 162.56 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25506"
+			(at 133.35 162.56 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8772,6 +9025,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C19666"
+			(at 121.92 49.53 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "0e663e07-121e-49f6-af5a-82f17c537ace")
 		)
@@ -8843,6 +9107,17 @@
 		)
 		(property "Description" "4 resistor network, parallel topology, split"
 			(at 83.82 157.48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C12018"
+			(at 83.82 157.48 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8942,6 +9217,17 @@
 		)
 		(property "Description" "48MHz RISC-V MCU with USB 2.0 Full speed phy (Device), 20KB RAM, 62KB Flash, TSSOP-20"
 			(at 65.786 7.62 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C54973763"
+			(at 64.77 52.07 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9174,6 +9460,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C54973763"
+			(at 166.37 45.72 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "3"
 			(uuid "dcec78cd-efb3-4751-bd54-0a8625cbcffe")
 		)
@@ -9254,6 +9551,17 @@
 		)
 		(property "Description" "4 resistor network, parallel topology, split"
 			(at 83.82 154.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C12018"
+			(at 83.82 154.94 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9352,6 +9660,17 @@
 			)
 		)
 		(property "Description" "4 resistor network, parallel topology, split"
+			(at 208.28 46.99 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C12028"
 			(at 208.28 46.99 0)
 			(hide yes)
 			(show_name no)
