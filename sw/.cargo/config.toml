@@ -1,0 +1,24 @@
+[build]
+target = "riscv32imc-unknown-none-elf"
+
+[target.riscv32imc-unknown-none-elf]
+runner = "wchisp flash"
+rustflags = "-Zllvm-target-feature=+relax"  # enable RISC-V linker relaxation
+
+[profile.dev]
+opt-level = 's'
+
+[profile.release]
+strip = false  # symbols are not flashed to the microcontroller, so don't strip them
+codegen-units = 1  # LLVM can perform better optimizations using a single thread
+debug = 2  # keep debug symbols
+debug-assertions = false  # disable codes behind debug cfg
+incremental = false
+lto = 'fat'
+opt-level = 'z'
+overflow-checks = false
+panic = "immediate-abort"  # abort immediately with unimp instruction on panic
+
+[unstable]
+panic-immediate-abort = true
+build-std = ["core"]  # required by immediate abort panic

@@ -45,3 +45,6 @@ fp-info-cache
 fabrication-toolkit-options.json
 
 *.pcb3d
+
+# Software
+/sw/target/

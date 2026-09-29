@@ -1,0 +1,13 @@
+[package]
+name = "time-driver"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pac = { workspace = true }
+qingke = { workspace = true }
+qingke-rt = { workspace = true }
+critical-section = { workspace = true }
+embassy-time = {version = "*", features = ["tick-hz-6_000_000"]}
+embassy-time-driver = "0.2"
+embassy-time-queue-utils = "0.3"

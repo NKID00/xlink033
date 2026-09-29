@@ -1,0 +1,44 @@
+[workspace]
+members = [".", "time-driver"]
+default-members = ["."]
+
+[package]
+name = "xlink033"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies.pioc]
+git = "https://github.com/NKID00/pioc.git"
+rev = "266f8ddad96b99a5818317a699e1753c87b24b49"
+
+[dependencies.embassy-executor]
+version = "0.10"
+features = ["nightly", "platform-spin", "executor-thread"]
+
+[dependencies]
+time-driver = { path = "time-driver" }
+pac = { workspace = true, features = ["rt"] }
+qingke = { workspace = true, features = ["critical-section-impl"] }
+qingke-rt = { workspace = true }
+critical-section = { workspace = true }
+embassy-time = "0.5"
+aligned = "0.4"
+
+[workspace.dependencies.pac]
+package = "ch32-metapac"
+git = "https://github.com/ch32-rs/ch32-metapac.git"
+rev = "9f03bc0b7c8e0282988473ff87494389005ce48d"
+features = ["ch32x033f8p6"]
+
+[workspace.dependencies.qingke]
+git = "https://github.com/ch32-rs/qingke.git"
+rev = "284240ea39b5c7f99d66cf99871b58128eb8b5a5"
+features = ["v4"]
+
+[workspace.dependencies.qingke-rt]
+git = "https://github.com/ch32-rs/qingke.git"
+rev = "284240ea39b5c7f99d66cf99871b58128eb8b5a5"
+features = ["v4"]
+
+[workspace.dependencies]
+critical-section = "1.2"
