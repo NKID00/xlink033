@@ -1,0 +1,8 @@
+[package]
+name = "usb_t"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+usb = "0.3"
+bitfield-struct = "0.13"

@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "time-driver"]
+members = [".", "coro", "coro-macros", "time-driver", "usb_t"]
 default-members = ["."]
 
 [package]
@@ -17,12 +17,18 @@ features = ["nightly", "platform-spin", "executor-thread"]
 
 [dependencies]
 time-driver = { path = "time-driver" }
+usb_t = { path = "usb_t" }
+coro = { path = "coro" }
 pac = { workspace = true, features = ["rt"] }
 qingke = { workspace = true, features = ["critical-section-impl"] }
 qingke-rt = { workspace = true }
 critical-section = { workspace = true }
 embassy-time = "0.5"
+embassy-sync = "0.8"
+usb = "0.3"
 aligned = "0.4"
+utf16_lit = "2.0"
+constcat = "0.6"
 
 [workspace.dependencies.pac]
 package = "ch32-metapac"
