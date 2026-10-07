@@ -24,14 +24,13 @@ use usb_t::{
     class::cdc::{
         self,
         desc::{AbsCtrlMgmtCap, CallMgmtCap},
-        setup::SET_LINE_CODING,
     },
     desc::{self, DevAttr, EpAddr, EpAttr, MaxPacketSize, TransferTy},
     setup::{Direction, Recipient, RequestType, SetupRequest},
 };
 use utf16_lit::utf16;
 
-use crate::{io::led_lnk_toggle, uart, util::read_serial_number};
+use crate::{io, uart, util::read_serial_number};
 
 const DEVICE_DESC: desc::Dev = desc::Dev {
     len: desc::Dev::LEN,
@@ -253,7 +252,7 @@ impl EndpointBuffer<256> {
     }
 
     pub const unsafe fn as_out(&'static self, toggle: bool) -> &'static [u8; 64] {
-        unsafe { self.as_in_ptr(toggle).as_ref_unchecked() }
+        unsafe { self.as_out_ptr(toggle).as_ref_unchecked() }
     }
 }
 
@@ -282,7 +281,7 @@ fn USBFS() {
     }
     if flags.suspend() {}
     if flags.bus_rst() {
-        led_lnk_toggle();
+        io::lnk_flash();
         reset();
     }
     USBFSD.int_fg().write_value(flags);
@@ -374,8 +373,8 @@ fn SetupStateMachine(packet: UsbPacket) {
                     prepare_out_ack::<1>();
                     prepare_out_ack::<2>();
                 }
-                (RequestType::Class, Recipient::Interface, SET_LINE_CODING) => {
-                    if let Err(()) = uart::on_ctrl_set_line_coding(data) {
+                (RequestType::Class, Recipient::Interface, _) if req.index == 2 => {
+                    if let Err(()) = uart::on_ctrl_write(&req, data) {
                         return prepare_stall::<0>();
                     }
                 }
@@ -442,7 +441,7 @@ fn parse_packet() -> UsbPacket {
                     buf: &buf[..len],
                 }
             } else {
-                let toggle = USBFSD.uep01234_ctrl(ep as usize).read().t_tog();
+                let toggle = USBFSD.uep01234_ctrl(ep as usize).read().r_tog();
                 let buf = match ep {
                     1 => unsafe { EP1_BUF.as_out(toggle) },
                     2 => unsafe { EP2_BUF.as_out(toggle) },

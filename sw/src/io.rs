@@ -1,10 +1,98 @@
+use embassy_executor::{Spawner, task};
+use embassy_time::Timer;
 use pac::{
     AFIO, GPIOA, GPIOB, GPIOC, TIM2,
     gpio::vals::{Cnf, Mode},
     timer::vals::{CcmrOutputCcs, Ocm},
 };
 
-pub fn init() {
+#[inline]
+pub fn act(duty_cycle: i32) {
+    TIM2.chcvr(0).write_value(duty_cycle as u16);
+}
+
+#[inline]
+pub fn act_on() {
+    act(100);
+}
+
+#[inline]
+fn act_off() {
+    act(0);
+}
+
+#[inline]
+pub fn act_flash() {
+    act_on();
+}
+
+#[task]
+async fn act_task() -> ! {
+    loop {
+        // for i in 0..20 {
+        //     act(i);
+        //     Timer::after_millis(25).await;
+        // }
+        // for i in (0..20).rev() {
+        //     act(i);
+        //     Timer::after_millis(25).await;
+        // }
+        act_off();
+        Timer::after_millis(25).await;
+    }
+}
+
+#[inline]
+pub fn lnk(duty_cycle: i32) {
+    TIM2.chcvr(1).write_value(duty_cycle as u16);
+}
+
+#[inline]
+fn lnk_on() {
+    lnk(100);
+}
+
+#[inline]
+fn lnk_off() {
+    lnk(0);
+}
+
+#[inline]
+pub fn lnk_flash() {
+    lnk_on();
+}
+
+#[task]
+async fn lnk_task() -> ! {
+    loop {
+        lnk_on();
+        Timer::after_millis(25).await;
+        for _ in 0..39 {
+            lnk_off();
+            Timer::after_millis(25).await;
+        }
+    }
+}
+
+#[inline]
+pub fn disable_uart_tx() {
+    GPIOA.cfglr().modify(|w| {
+        // PA2 TX
+        w.set_mode(2, Mode::OUTPUT_50MHZ);
+        w.set_cnf(2, Cnf::ANALOG_IN__PUSH_PULL_OUT);
+    });
+}
+
+#[inline]
+pub fn enable_uart_tx() {
+    GPIOA.cfglr().modify(|w| {
+        // PA2 TX
+        w.set_mode(2, Mode::OUTPUT_50MHZ);
+        w.set_cnf(2, Cnf::PULL_IN__AF_PUSH_PULL_OUT);
+    });
+}
+
+pub fn init(spawner: &Spawner) {
     // disable SWD to use those pins as GPIO
     AFIO.pcfr1().modify(|w| w.set_sw_cfg(0b100));
 
@@ -28,7 +116,7 @@ pub fn init() {
         }
         // PA2 TX
         w.set_mode(2, Mode::OUTPUT_50MHZ);
-        w.set_cnf(2, Cnf::PULL_IN__AF_PUSH_PULL_OUT);
+        w.set_cnf(2, Cnf::ANALOG_IN__PUSH_PULL_OUT);
         // PA3 RX
         w.set_mode(3, Mode::INPUT);
         w.set_cnf(3, Cnf::PULL_IN__AF_PUSH_PULL_OUT);
@@ -128,48 +216,7 @@ pub fn init() {
     TIM2.ctlr1().modify(|w| {
         w.set_cen(true);
     });
-}
 
-#[inline]
-pub fn led_act(duty_cycle: i32) {
-    TIM2.chcvr(0).write_value(duty_cycle as u16);
-}
-
-#[inline]
-pub fn led_act_on() {
-    led_act(100);
-}
-
-#[inline]
-pub fn led_act_off() {
-    led_act(0);
-}
-
-#[inline]
-pub fn led_act_toggle() {
-    TIM2.chcvr(0).write(|w| {
-        *w = if *w < 50 { 100 } else { 0 };
-    });
-}
-
-#[inline]
-pub fn led_lnk(duty_cycle: i32) {
-    TIM2.chcvr(1).write_value(duty_cycle as u16);
-}
-
-#[inline]
-pub fn led_lnk_on() {
-    led_lnk(100);
-}
-
-#[inline]
-pub fn led_lnk_off() {
-    led_lnk(0);
-}
-
-#[inline]
-pub fn led_lnk_toggle() {
-    TIM2.chcvr(1).write(|w| {
-        *w = if *w < 50 { 100 } else { 0 };
-    });
+    spawner.spawn(act_task().unwrap());
+    spawner.spawn(lnk_task().unwrap());
 }
