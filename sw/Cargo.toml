@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "coro", "coro-macros", "time-driver", "usb_t"]
+members = [".", "coro", "coro-macros", "static_buffers", "time-driver", "usb_t"]
 default-members = ["."]
 
 [package]
@@ -19,6 +19,7 @@ features = ["nightly", "platform-spin", "executor-thread"]
 time-driver = { path = "time-driver" }
 usb_t = { path = "usb_t" }
 coro = { path = "coro" }
+static-buffers = { path = "static_buffers" }
 pac = { workspace = true, features = ["rt"] }
 qingke = { workspace = true, features = ["critical-section-impl"] }
 qingke-rt = { workspace = true }
@@ -48,3 +49,4 @@ features = ["v4"]
 
 [workspace.dependencies]
 critical-section = "1.2"
+aligned = "0.4"

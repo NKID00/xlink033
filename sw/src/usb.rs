@@ -1,6 +1,8 @@
-use core::cell::UnsafeCell;
+use core::{
+    num::NonZeroU8,
+    sync::atomic::{AtomicI32, Ordering},
+};
 
-use aligned::{A4, Aligned};
 use constcat::concat_bytes;
 use coro::UnsafeStatic;
 use pac::{
@@ -16,6 +18,7 @@ use qingke::{
     pfic::{enable_interrupt, set_priority},
 };
 use qingke_rt::interrupt;
+use static_buffers::{BufState, DoubleBufState, StaticBuf, StaticDoubleBuf};
 use usb::{
     descriptor_type,
     standard_request::{GET_DESCRIPTOR, SET_ADDRESS, SET_CONFIGURATION},
@@ -30,7 +33,11 @@ use usb_t::{
 };
 use utf16_lit::utf16;
 
-use crate::{io, uart, util::read_serial_number};
+use crate::{
+    io::{self, lnk_off, lnk_on},
+    uart,
+    util::read_serial_number,
+};
 
 const DEVICE_DESC: desc::Dev = desc::Dev {
     len: desc::Dev::LEN,
@@ -208,61 +215,18 @@ const STRINGS: &[&[u8]] = &[
 
 const USBFSD: Usbd = unsafe { Usbd::from_ptr(pac::USBFS.as_ptr()) };
 
-pub struct EndpointBuffer<const N: usize>(UnsafeCell<Aligned<A4, [u8; N]>>);
-
-impl<const N: usize> EndpointBuffer<N> {
-    pub const fn new() -> Self {
-        Self(UnsafeCell::new(Aligned([0; N])))
-    }
-
-    pub const fn len(&self) -> usize {
-        N
-    }
-
-    pub const fn get(&'static self) -> *const u8 {
-        self.0.get() as *const u8
-    }
-}
-
-impl EndpointBuffer<64> {
-    pub const fn as_ptr(&'static self) -> *const [u8; 64] {
-        self.get() as *const [u8; 64]
-    }
-
-    pub const unsafe fn as_in(&'static self) -> &'static mut [u8; 64] {
-        unsafe { self.as_ptr().cast_mut().as_mut_unchecked() }
-    }
-
-    pub const unsafe fn as_out(&'static self) -> &'static [u8; 64] {
-        unsafe { self.as_ptr().as_ref_unchecked() }
-    }
-}
-
-impl EndpointBuffer<256> {
-    pub const fn as_in_ptr(&'static self, toggle: bool) -> *mut [u8; 64] {
-        self.get().wrapping_add(if toggle { 192 } else { 128 }) as *mut [u8; 64]
-    }
-
-    pub const fn as_out_ptr(&'static self, toggle: bool) -> *const [u8; 64] {
-        self.get().wrapping_add(if toggle { 64 } else { 0 }) as *const [u8; 64]
-    }
-
-    pub const unsafe fn as_in(&'static self, toggle: bool) -> &'static mut [u8; 64] {
-        unsafe { self.as_in_ptr(toggle).as_mut_unchecked() }
-    }
-
-    pub const unsafe fn as_out(&'static self, toggle: bool) -> &'static [u8; 64] {
-        unsafe { self.as_out_ptr(toggle).as_ref_unchecked() }
-    }
-}
-
-// Safety: the only public method is already unsafe.
-unsafe impl<const N: usize> Sync for EndpointBuffer<N> {}
-
-pub static EP0_BUF: EndpointBuffer<64> = EndpointBuffer::new(); // IN & OUT
-pub static EP1_BUF: EndpointBuffer<256> = EndpointBuffer::new(); // OUT0, OUT1, IN0, IN1
-pub static EP2_BUF: EndpointBuffer<256> = EndpointBuffer::new(); // OUT0, OUT1, IN0, IN1
-pub static EP3_BUF: EndpointBuffer<64> = EndpointBuffer::new(); // IN
+pub static EP0_BUF: StaticBuf<64> = StaticBuf::new(); // IN & OUT
+pub static EP1_BUF: [StaticDoubleBuf<64>; 2] = [StaticDoubleBuf::new(), StaticDoubleBuf::new()]; // OUT0, OUT1, IN0, IN1
+pub static EP2_BUF: [StaticDoubleBuf<64>; 2] = [StaticDoubleBuf::new(), StaticDoubleBuf::new()]; // OUT0, OUT1, IN0, IN1
+pub static EP3_BUF: StaticBuf<64> = StaticBuf::new(); // IN
+pub const EP1_BUF_OUT: &'static StaticDoubleBuf<64> = &EP1_BUF[0];
+pub const EP1_BUF_IN: &'static StaticDoubleBuf<64> = &EP1_BUF[1];
+pub const EP2_BUF_OUT: &'static StaticDoubleBuf<64> = &EP2_BUF[0];
+pub const EP2_BUF_IN: &'static StaticDoubleBuf<64> = &EP2_BUF[1];
+pub static EP1_OUT_STATE: DoubleBufState<NonZeroU8> = DoubleBufState::new();
+pub static EP1_IN_STATE: DoubleBufState<NonZeroU8> = DoubleBufState::new();
+pub static EP2_OUT_STATE: DoubleBufState<NonZeroU8> = DoubleBufState::new();
+pub static EP2_IN_STATE: DoubleBufState<NonZeroU8> = DoubleBufState::new();
 
 #[interrupt]
 fn USBFS() {
@@ -271,11 +235,73 @@ fn USBFS() {
         let packet = parse_packet();
         match packet {
             packet if packet.ep() == 0 => unsafe { SETUP_STATE_MACHINE.wrapping_resume(packet) },
-            UsbPacket::In { ep: 1 } => {}
-            UsbPacket::Out { ep: 1, buf } => {}
-            UsbPacket::In { ep: 2 } => uart::on_ep2_in(),
-            UsbPacket::Out { ep: 2, buf } => uart::on_ep2_out(buf),
-            UsbPacket::In { ep: 3 } => prepare_in_nak_flip_toggle::<3>(),
+            UsbPacket::In { ep: 1, toggle } => {}
+            UsbPacket::Out { ep: 1, toggle, len } => {}
+            UsbPacket::In { ep: 2, toggle } => {
+                critical_section::with(|cs| {
+                    uart::on_ep2_in(cs, toggle);
+                });
+            }
+            UsbPacket::Out { ep: 2, toggle, len } => {
+                critical_section::with(|cs| {
+                    // static COUNTER: AtomicI32 = AtomicI32::new(0);
+                    // let counter = COUNTER.load(Ordering::SeqCst) + 1;
+                    // COUNTER.store(counter, Ordering::SeqCst);
+                    // io::act_on();
+                    // match counter {
+                    //     1 => {
+                    //         assert!(toggle == false);
+                    //         assert!(len == 8);
+                    //         assert!(
+                    //             unsafe { &EP2_BUF_OUT.as_ref(toggle)[..len as usize] }
+                    //                 == [0, 1, 2, 3, 4, 5, 6, 7]
+                    //         );
+                    //         assert!(EP2_OUT_STATE.get(cs, toggle) == BufState::Empty);
+                    //         assert!(EP2_OUT_STATE.get(cs, !toggle) == BufState::Empty);
+                    //     }
+                    //     2 => {
+                    //         assert!(toggle == true);
+                    //         assert!(len == 1);
+                    //         assert!(unsafe { &EP2_BUF_OUT.as_ref(toggle)[..len as usize] } == [8]);
+                    //         assert!(EP2_OUT_STATE.get(cs, toggle) == BufState::Empty);
+                    //         assert!(
+                    //             EP2_OUT_STATE.get(cs, !toggle)
+                    //                 == BufState::Filled {
+                    //                     len: NonZeroU8::new(8).unwrap()
+                    //                 }
+                    //         );
+                    //     }
+                    //     3 => {
+                    //         assert!(toggle == false);
+                    //         assert!(len == 1);
+                    //         assert!(unsafe { &EP2_BUF_OUT.as_ref(toggle)[..len as usize] } == [9]);
+                    //         assert!(EP2_OUT_STATE.get(cs, toggle) == BufState::Empty);
+                    //         assert!(EP2_OUT_STATE.get(cs, !toggle) == BufState::Empty);
+                    //     }
+                    //     _ => {}
+                    // }
+                    // io::act_off();
+                    // if len == 0 {
+                    //     panic!();
+                    // }
+                    if len > 0 {
+                        assert!(EP2_OUT_STATE.get(cs, toggle) == BufState::Empty);
+                        EP2_OUT_STATE.mark_filled(cs, toggle, NonZeroU8::new(len).unwrap());
+                    }
+                    if EP2_OUT_STATE.get(cs, !toggle) == BufState::Empty {
+                        // dma is idle, start new transfer
+                        if len > 0 {
+                            // io::lnk_off();
+                            uart::start_tx_dma(toggle, len);
+                        }
+                        prepare_out_ack_flip_toggle::<2>();
+                    } else {
+                        // io::act_flash();
+                        prepare_out_nak_flip_toggle::<2>();
+                    }
+                });
+            }
+            UsbPacket::In { ep: 3, toggle } => prepare_in_nak_flip_toggle::<3>(),
             _ => {}
         }
     }
@@ -327,13 +353,13 @@ fn SetupStateMachine(packet: UsbPacket) {
                     let mut toggle = true;
                     while data.len() > 0 {
                         let packet_len = data.len().min(64);
-                        (unsafe { EP0_BUF.as_in() }[..packet_len])
+                        (unsafe { EP0_BUF.as_mut() }[..packet_len])
                             .copy_from_slice(&data[..packet_len]);
                         data = &data[packet_len..];
                         prepare_in_ack_with_toggle::<0>(toggle, packet_len);
                         toggle = !toggle;
                         let packet = yield;
-                        let In { ep: _ } = packet else {
+                        let In { .. } = packet else {
                             return prepare_stall::<0>();
                         };
                     }
@@ -348,22 +374,21 @@ fn SetupStateMachine(packet: UsbPacket) {
             }
         }
         Direction::Out => {
-            let len = req.len as usize;
-            if len > 64 {
+            if req.len > 64 {
                 // current implementation only accepts single data packet
                 return prepare_stall::<0>();
             }
-            let data: &'static [u8] = if len > 0 {
+            let data: &'static [u8] = if req.len > 0 {
                 // OUT1 data stage
                 prepare_out_ack_with_toggle::<0>(true);
                 let packet = yield;
-                let Out { buf, .. } = packet else {
+                let Out { len, .. } = packet else {
                     return prepare_stall::<0>();
                 };
-                if buf.len() != len {
+                if len as u16 != req.len {
                     return prepare_stall::<0>();
                 }
-                buf
+                unsafe { &EP0_BUF.as_ref()[..len as usize] }
             } else {
                 &[]
             };
@@ -396,8 +421,8 @@ fn SetupStateMachine(packet: UsbPacket) {
 }
 
 enum UsbPacket {
-    In { ep: u8 },
-    Out { ep: u8, buf: &'static [u8] },
+    In { ep: u8, toggle: bool },
+    Out { ep: u8, toggle: bool, len: u8 },
     Setup { req: SetupRequest },
     Err { ep: u8 },
 }
@@ -406,9 +431,9 @@ impl UsbPacket {
     fn ep(&self) -> u8 {
         use UsbPacket::*;
         match self {
-            In { ep } => *ep,
-            Out { ep, buf: _ } => *ep,
-            Setup { req: _ } => 0,
+            In { ep, .. } => *ep,
+            Out { ep, .. } => *ep,
+            Setup { .. } => 0,
             Err { ep } => *ep,
         }
     }
@@ -431,35 +456,32 @@ fn parse_packet() -> UsbPacket {
         return Err { ep };
     }
     match status.mask_token() {
-        IN => In { ep },
-        OUT => {
-            let len = USBFSD.rx_len().read().rx_len() as usize;
-            if ep == 0 {
-                let buf = unsafe { EP0_BUF.as_out() };
-                Out {
-                    ep,
-                    buf: &buf[..len],
-                }
-            } else {
-                let toggle = USBFSD.uep01234_ctrl(ep as usize).read().r_tog();
-                let buf = match ep {
-                    1 => unsafe { EP1_BUF.as_out(toggle) },
-                    2 => unsafe { EP2_BUF.as_out(toggle) },
-                    _ => unreachable!(),
-                };
-                Out {
-                    ep,
-                    buf: &buf[..len],
-                }
-            }
-        }
+        IN => In {
+            ep,
+            toggle: get_in_toggle(ep as usize),
+        },
+        OUT => Out {
+            ep,
+            toggle: get_out_toggle(ep as usize),
+            len: USBFSD.rx_len().read().rx_len() as u8,
+        },
         _ => Err { ep },
     }
 }
 
 #[inline]
+pub fn get_in_toggle(ep: usize) -> bool {
+    USBFSD.uep01234_ctrl(ep).read().t_tog()
+}
+
+#[inline]
+pub fn get_out_toggle(ep: usize) -> bool {
+    USBFSD.uep01234_ctrl(ep).read().r_tog()
+}
+
+#[inline]
 pub fn prepare_in_ack<const EP: usize>(len: usize) {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_t_len(EP).write(|w| w.set_t_len(len as u8));
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_t_res(EpTxResponse::ACK);
@@ -468,7 +490,7 @@ pub fn prepare_in_ack<const EP: usize>(len: usize) {
 
 #[inline]
 pub fn prepare_out_ack<const EP: usize>() {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_r_res(EpRxResponse::ACK);
     });
@@ -476,7 +498,7 @@ pub fn prepare_out_ack<const EP: usize>() {
 
 #[inline]
 pub fn prepare_in_ack_flip_toggle<const EP: usize>(len: usize) {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_t_len(EP).write(|w| w.set_t_len(len as u8));
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_t_tog(!w.t_tog());
@@ -486,7 +508,7 @@ pub fn prepare_in_ack_flip_toggle<const EP: usize>(len: usize) {
 
 #[inline]
 pub fn prepare_out_ack_flip_toggle<const EP: usize>() {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_r_tog(!w.r_tog());
         w.set_r_res(EpRxResponse::ACK);
@@ -495,7 +517,7 @@ pub fn prepare_out_ack_flip_toggle<const EP: usize>() {
 
 #[inline]
 pub fn prepare_in_ack_with_toggle<const EP: usize>(toggle: bool, len: usize) {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_t_len(EP).write(|w| w.set_t_len(len as u8));
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_t_tog(toggle);
@@ -505,7 +527,7 @@ pub fn prepare_in_ack_with_toggle<const EP: usize>(toggle: bool, len: usize) {
 
 #[inline]
 pub fn prepare_out_ack_with_toggle<const EP: usize>(toggle: bool) {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_r_tog(toggle);
         w.set_r_res(EpRxResponse::ACK);
@@ -520,7 +542,7 @@ pub fn prepare_nak<const EP: usize>() {
 
 #[inline]
 pub fn prepare_in_nak<const EP: usize>() {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_t_res(EpTxResponse::NAK);
     });
@@ -528,7 +550,7 @@ pub fn prepare_in_nak<const EP: usize>() {
 
 #[inline]
 pub fn prepare_out_nak<const EP: usize>() {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_r_res(EpRxResponse::NAK);
     });
@@ -536,7 +558,7 @@ pub fn prepare_out_nak<const EP: usize>() {
 
 #[inline]
 pub fn prepare_in_nak_flip_toggle<const EP: usize>() {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_t_tog(!w.t_tog());
         w.set_t_res(EpTxResponse::NAK);
@@ -545,7 +567,7 @@ pub fn prepare_in_nak_flip_toggle<const EP: usize>() {
 
 #[inline]
 pub fn prepare_out_nak_flip_toggle<const EP: usize>() {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_r_tog(!w.r_tog());
         w.set_r_res(EpRxResponse::NAK);
@@ -560,7 +582,7 @@ pub fn prepare_stall<const EP: usize>() {
 
 #[inline]
 pub fn prepare_in_stall<const EP: usize>() {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_t_len(EP).write(|w| w.set_t_len(0));
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_t_res(EpTxResponse::STALL);
@@ -569,7 +591,7 @@ pub fn prepare_in_stall<const EP: usize>() {
 
 #[inline]
 pub fn prepare_out_stall<const EP: usize>() {
-    const { assert!(EP <= 4) };
+    const { assert!(EP <= 3) };
     USBFSD.uep01234_ctrl(EP).modify(|w| {
         w.set_r_res(EpRxResponse::STALL);
     });
@@ -601,10 +623,10 @@ pub fn init() {
         .write(|w| w.set_buf_addr(EP0_BUF.get() as u16));
     USBFSD
         .uep0123_dma(1)
-        .write(|w| w.set_buf_addr(EP1_BUF.get() as u16));
+        .write(|w| w.set_buf_addr(EP1_BUF[0].base() as u16));
     USBFSD
         .uep0123_dma(2)
-        .write(|w| w.set_buf_addr(EP2_BUF.get() as u16));
+        .write(|w| w.set_buf_addr(EP2_BUF[0].base() as u16));
     USBFSD
         .uep0123_dma(3)
         .write(|w| w.set_buf_addr(EP3_BUF.get() as u16));
@@ -656,7 +678,7 @@ pub fn init() {
 }
 
 fn reset() {
-    critical_section::with(|_cs| {
+    critical_section::with(|cs| {
         // reset endpoints
         for i in 0..=3 {
             USBFSD.uep01234_t_len(i).write(|w| w.set_t_len(0));
@@ -671,6 +693,10 @@ fn reset() {
         USBFSD.dev_ad().write(|w| w.set_mask_usb_addr(0));
         // reset state machine
         unsafe { SETUP_STATE_MACHINE.reset() };
+        EP1_IN_STATE.clear(cs);
+        EP1_OUT_STATE.clear(cs);
+        EP2_IN_STATE.clear(cs);
+        EP2_OUT_STATE.clear(cs);
         // reset fifo and interrupt flags
         USBFSD.ctrl().modify(|w| {
             w.set_clr_all(true);

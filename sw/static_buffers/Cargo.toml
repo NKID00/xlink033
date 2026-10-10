@@ -1,0 +1,8 @@
+[package]
+name = "static-buffers"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aligned = { workspace = true }
+critical-section = { workspace = true }

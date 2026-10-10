@@ -17,7 +17,7 @@ pub fn act_on() {
 }
 
 #[inline]
-fn act_off() {
+pub fn act_off() {
     act(0);
 }
 
@@ -29,16 +29,17 @@ pub fn act_flash() {
 #[task]
 async fn act_task() -> ! {
     loop {
-        // for i in 0..20 {
-        //     act(i);
-        //     Timer::after_millis(25).await;
-        // }
-        // for i in (0..20).rev() {
-        //     act(i);
-        //     Timer::after_millis(25).await;
-        // }
-        act_off();
-        Timer::after_millis(25).await;
+        for i in 0..20 {
+            // act(i);
+            act_off();
+            Timer::after_millis(25).await;
+        }
+        for i in (0..20).rev() {
+            // act(i);
+            act_off();
+            Timer::after_millis(25).await;
+        }
+        // Timer::after_millis(50).await;
     }
 }
 
@@ -48,12 +49,12 @@ pub fn lnk(duty_cycle: i32) {
 }
 
 #[inline]
-fn lnk_on() {
+pub fn lnk_on() {
     lnk(100);
 }
 
 #[inline]
-fn lnk_off() {
+pub fn lnk_off() {
     lnk(0);
 }
 
@@ -67,8 +68,8 @@ async fn lnk_task() -> ! {
     loop {
         lnk_on();
         Timer::after_millis(25).await;
+        lnk_off();
         for _ in 0..39 {
-            lnk_off();
             Timer::after_millis(25).await;
         }
     }
